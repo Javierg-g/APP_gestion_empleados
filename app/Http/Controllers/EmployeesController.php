@@ -22,8 +22,10 @@ class EmployeesController extends Controller
 
         }else{
             $valido = false;
- 
+
         }
+
+        $usuario->password = Hash::make($req->password);
 
 
 
@@ -79,5 +81,36 @@ class EmployeesController extends Controller
         }
 
         return response()->json($respuesta);*/
+    }
+
+
+    public function login(Request $req){
+        //Buscar email
+        $email = $req->email;
+        //Validar
+
+        //Encontrar usuario
+        $employee = Employee::where('email',$email)->first();
+        //Pasar la validacion
+
+        //Comprobar la contraseña
+        if(Hash::check($req->password, $employee->passsword)){
+            //Generar api token
+            do{
+                $token  =Hash::make($usuario->id.now());
+                //md5()
+            }while(Employee::where('api_token',$token)->first());
+
+            //Guardar token en usuario
+            $employee->api_token = $token;
+            $employee->save();
+
+            //Devolver respuesta con el token
+            return response()->json();
+
+        }else{
+            
+
+        }
     }
 }
