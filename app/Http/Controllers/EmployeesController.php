@@ -20,16 +20,42 @@ class EmployeesController extends Controller
             "name" => 'required|max:50',
             "email" => 'required','email','unique:App\Models\Employee,email','max:30',
             "password" => 'required','regex:/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}/',
-            "work_role" => 'required|in:DIRECCIÓN,RRHH,EMPLEADO',
+            "work_role" => 'required|in:Dirección,RRHH,Empleado',
             "salary" => 'required','numeric',
             "bio" => 'required|max:150',
 
         ]);
 
         if ($validator->fails()) {
+            $response['status'] = "0";
+            $response['msg'] = "Los campos introducidos no son correctos";
 
-            return response()->json("");
+            return response()->json($response);
           
+        }else{
+
+            $data = json_decode($req->getContent());
+
+            $employee = new Employee();
+
+            $employee->name = $data->name;
+            $employee->email = $data->email;
+            $employee->password = Hash::make($data->password);
+            $employee->work_role = $data->work_role;
+            $employee->salary = $data->salary;
+            $employee->bio = $data->bio;
+
+
+            try {
+                $employee->save();
+                $response['msg'] = "Empleado registrado" . $employee->id;
+            } catch (\Exception $e) {
+                $response['status'] = 0;
+                $req['msg'] = "Se ha producido un error" . $e->getMessage();
+            }
+
+            return response()->json($response);
+
         }
 
     }
