@@ -4,87 +4,48 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Employee;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+
 
 
 class EmployeesController extends Controller
 {
     public function register(Request $req)
     {
+        $response = ["status" => 1, "msg" => ""];
 
-        $password = $req->password;
+        $validator = Validator::make(json_decode($req->getContent(), true), [
 
-        $valido = true;
+            "name" => 'required|max:50',
+            "email" => 'required','email','unique:App\Models\Employee,email','max:30',
+            "password" => 'required','regex:/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}/',
+            "work_role" => 'required|in:DIRECCIÓN,RRHH,EMPLEADO',
+            "salary" => 'required','numeric',
+            "bio" => 'required|max:150',
 
-        if($password){
-            if(!preg_match(/[a-z]{6,}/, $password])){
-                $valido = false;
-            }
+        ]);
 
-        }else{
-            $valido = false;
+        if ($validator->fails()) {
 
+            return response()->json("");
+          
         }
 
-        $usuario->password = Hash::make($req->password);
-
-
-
-        /*
-        $respuesta = ["Status" => 1, "msg"];
-
-        $datos = $req->getContent();
-
-        $datos = json_decode($datos);
-
-        //Validar datos
-        $usuario = new Employee();
-
-        $usuario->nombre = $datos->nombre;
-        $usuario->foto = $datos->foto;
-        $usuario->email = $datos->email;
-        $usuario->contraseña = $datos->contraseña;
-        $usuario->activado = $datos->activado = 1;
-
-        //Escribir en BBDD
-        try {
-            $usuario->save();
-            $respuesta['msg'] = "Usuario guardado con id" . $usuario->id;
-        } catch (\Exception $e) {
-            $respuesta['status'] = 0;
-            $respuesta['msg'] = "Se ha producido un error" . $e->getMessage();
-        }
-
-        return response()->json($respuesta);
     }
 
-    public function desactivar($id)
-    {
-        $respuesta = ["Status" => 1, "msg" => ""];
-        $usuario = Usuario::find($id);
+    /*public function passwordRecovery(Request $req){
+        //Obtener el email y validar
 
-        if ($usuario && $usuario->activado == 1) {
+        //Al encontrar al usuario
+        $employee->apit_token = null;
 
-            try {
-                $usuario->activado = 0;
-                $usuario->save();
-                $respuesta['msg'] = "Usuario desactivado";
-            } catch (\Exception $e) {
-                $respuesta['status'] = 0;
-                $respuesta['msg'] = "Se ha producido un error" . $e->getMessage();
-            }
-        } else if (!$usuario->activado == 1) {
-            $respuesta["msg"] = "El usuario ya estaba desactivado";
-            $respuesta["status"] = 0;
-        } else {
-            $respuesta["msg"] = "Usuario no econtrada";
-            $respuesta["status"] = 0;
-        }
-
-        return response()->json($respuesta);*/
-    }
+        $password = md5("newPass");
+        $employee->password = Hash::make($password);
+    }*/
 
 
-    public function login(Request $req){
+    /*public function login(Request $req){
         //Buscar email
         $email = $req->email;
         //Validar
@@ -112,5 +73,5 @@ class EmployeesController extends Controller
             
 
         }
-    }
+    }*/
 }
