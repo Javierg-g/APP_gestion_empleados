@@ -10,14 +10,15 @@ use App\Models\Employee;
 });*/
 
 //Paso por middlewares Autenticacion y autorizacion
-/*Route::middleware(['permissions'])->prefix('employees')->group(function () {
+Route::middleware(['token','permissions'])->prefix('employees')->group(function () {
 
-    //Route::put('/register', [Employee::class, 'register']);
-});*/
+    Route::put('/register', [EmployeesController::class, 'register']);
+});
 
 //Sin paso por middlewares
 Route::prefix('employees')->group(function () {
-    Route::put('/register', [EmployeesController::class, 'register']);
+    Route::post('/login', [EmployeesController::class, 'login']);
+    Route::post('/passwordRecovery', [EmployeesController::class, 'passwordRecovery']);
 });
 
 

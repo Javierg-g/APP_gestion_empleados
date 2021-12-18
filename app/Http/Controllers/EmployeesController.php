@@ -18,10 +18,10 @@ class EmployeesController extends Controller
         $validator = Validator::make(json_decode($req->getContent(), true), [
 
             "name" => 'required|max:50',
-            "email" => 'required','email','unique:App\Models\Employee,email','max:30',
-            "password" => 'required','regex:/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}/',
+            "email" => 'required', 'email', 'unique:App\Models\Employee,email', 'max:30',
+            "password" => 'required', 'regex:/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}/',
             "work_role" => 'required|in:Dirección,RRHH,Empleado',
-            "salary" => 'required','numeric',
+            "salary" => 'required', 'numeric',
             "bio" => 'required|max:150',
 
         ]);
@@ -31,8 +31,7 @@ class EmployeesController extends Controller
             $response['msg'] = "Los campos introducidos no son correctos";
 
             return response()->json($response);
-          
-        }else{
+        } else {
 
             $data = json_decode($req->getContent());
 
@@ -48,15 +47,43 @@ class EmployeesController extends Controller
 
             try {
                 $employee->save();
-                $response['msg'] = "Empleado registrado" . $employee->id;
+                $response['msg'] = "Empleado registrado con id: " . $employee->id;
             } catch (\Exception $e) {
                 $response['status'] = 0;
                 $req['msg'] = "Se ha producido un error" . $e->getMessage();
             }
 
             return response()->json($response);
-
         }
+    }
+
+    public function login(Request $req)
+    {
+
+        $data = json_decode($req->getContent());
+
+        try {
+
+            if (Employee::where('email', '=', $data->email)->first()) {
+                $employee = Employee::where('email', '=', $data->email)->first();
+                if (Hash::check($data->password, $employee->password)) {
+                    do {
+                        $token = Hash::make($employee->id .now());
+                    } while (Employee::where('api_token', $token)->first());
+
+                    $employee->api_token = $token;
+                    $employee->save();
+                } else {
+                    $response['msg'] = "La contraseña es incorrecta";
+                }
+            } else {
+                $response['msg'] = "El usuario no se ha encontrado";
+            }
+        } catch (\Exception $e) {
+            $response['status'] = 0;
+            $req['msg'] = "Se ha producido un error" . $e->getMessage();
+        }
+        return response()->json($response);
 
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use App\Models\Employee;
 
 class PermissionValidation
 {
@@ -16,6 +17,11 @@ class PermissionValidation
      */
     public function handle(Request $request, Closure $next)
     {
-        return $next($request);
+        if ($request->employee->work_role == "RRHH" || $request->employee->work_role == "Dirección") {
+            return $next($request);
+        } else {
+            $response['msg'] = "El usuario actual no posee los permisos necesarios";
+        }
+        return response()->json($response);
     }
 }
