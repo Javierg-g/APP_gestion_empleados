@@ -20,7 +20,7 @@ class EmployeesController extends Controller
         $validator = Validator::make(json_decode($req->getContent(), true), [
 
             "name" => 'required|max:50',
-            "email" => 'required|email|unique:App\Models\Employee,email|max:30',
+            "email" => 'required|email|unique:App\Models\Employee,email|max:40',
             "password" => 'required|regex:/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}/',
             "work_role" => 'required|in:Dirección,RRHH,Empleado',
             "salary" => 'required', 'numeric',
@@ -30,7 +30,7 @@ class EmployeesController extends Controller
 
         if ($validator->fails()) {
             $response['status'] = "0";
-            print($validator->errors());
+            print("Errores de la validación de la edición:" . $validator->errors());
             $response['msg'] = "Los campos introducidos no son correctos";
 
             return response()->json($response);
@@ -77,6 +77,7 @@ class EmployeesController extends Controller
 
                     $employee->api_token = $token;
                     $employee->save();
+                    $response['msg'] = "Accediendo a la cuenta...";
                 } else {
                     $response['msg'] = "La contraseña es incorrecta";
                 }
@@ -222,6 +223,68 @@ class EmployeesController extends Controller
 
             $response['status'] = 0;
             $response['msg'] = "Se ha producido un error: " . $e->getMessage();
+        }
+
+        return response()->json($response);
+    }
+
+    public function edit(Request $req)
+    {
+        $data = json_decode($req->getContent());
+        $token = $req->query('api_token');
+
+        $employee = Employee::find($req->editId);
+
+        if ($employee) {
+            $validator = Validator::make(json_decode($req->getContent(), true), [
+
+                "name" => 'required|max:50',
+                "email" => 'required|email|unique:App\Models\Employee,email|max:30',
+                "password" => 'required|regex:/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}/',
+                "work_role" => 'required|in:Dirección,RRHH,Empleado',
+                "salary" => 'required', 'numeric',
+                "bio" => 'required|max:150'
+
+            ]);
+
+            if ($validator->fails()) {
+                $response['status'] = "0";
+                print("Errores de la validación de la edición:" . $validator->errors());
+                $response['msg'] = "Los campos introducidos no son correctos";
+
+                return response()->json($response);
+            } else {
+
+                if (isset($data->name)) {
+                    $employee->name = $data->name;
+                }
+                if (isset($data->email)) {
+                    $employee->email = $data->email;
+                }
+                if (isset($data->password)) {
+                    $employee->password = $data->password;
+                }
+                if (isset($data->work_role)) {
+                    $employee->work_role = $data->work_role;
+                }
+                if (isset($data->salary)) {
+                    $employee->salary = $data->salary;
+                }
+                if (isset($data->bio)) {
+                    $employee->bio = $data->bio;
+                }
+
+                try {
+                    $employee->save();
+                    $response['msg'] = "Los cambios han sido guardados";
+                } catch (\Exception $e) {
+                    $response['status'] = 0;
+                    print($e);
+                    $response['msg'] = "Se ha producido un error" . $e->getMessage();
+                }
+            }
+        } else {
+            $response['msg'] = "El usuario no existe";
         }
 
         return response()->json($response);

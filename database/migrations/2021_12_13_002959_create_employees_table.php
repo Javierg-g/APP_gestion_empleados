@@ -20,7 +20,7 @@ class CreateEmployeesTable extends Migration
             $table->string('password');
             $table->enum('work_role', ['Dirección', 'RRHH','Empleado']);
             $table->float('salary', 8, 2);
-            $table->longText('Bio');
+            $table->longText('bio');
             $table->string('api_token')->nullable()->unique();
             $table->timestamps();
         });
