@@ -239,7 +239,7 @@ class EmployeesController extends Controller
             $validator = Validator::make(json_decode($req->getContent(), true), [
 
                 "name" => 'required|max:50',
-                "email" => 'required|email|unique:App\Models\Employee,email|max:30',
+                "email" => 'required|email|unique:App\Models\Employee,email|max:40',
                 "password" => 'required|regex:/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}/',
                 "work_role" => 'required|in:Dirección,RRHH,Empleado',
                 "salary" => 'required', 'numeric',
@@ -262,7 +262,7 @@ class EmployeesController extends Controller
                     $employee->email = $data->email;
                 }
                 if (isset($data->password)) {
-                    $employee->password = $data->password;
+                    $employee->password = Hash::make($data->password);
                 }
                 if (isset($data->work_role)) {
                     $employee->work_role = $data->work_role;

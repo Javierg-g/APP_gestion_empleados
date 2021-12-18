@@ -28,6 +28,4 @@ Route::middleware(['token'])->prefix('employees')->group(function () {
 Route::prefix('employees')->group(function () {
     Route::post('/login', [EmployeesController::class, 'login']);
     Route::post('/passwordRecovery', [EmployeesController::class, 'passwordRecovery']);
-    //Route::put('/register', [EmployeesController::class, 'register']);
-
 });
