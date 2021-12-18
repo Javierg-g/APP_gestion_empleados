@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordRecovered;
+use Illuminate\Support\Facades\DB;
 
 
 class EmployeesController extends Controller
@@ -19,16 +20,17 @@ class EmployeesController extends Controller
         $validator = Validator::make(json_decode($req->getContent(), true), [
 
             "name" => 'required|max:50',
-            "email" => 'required', 'email', 'unique:App\Models\Employee,email', 'max:30',
-            "password" => 'required', 'regex:/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}/',
+            "email" => 'required|email|unique:App\Models\Employee,email|max:30',
+            "password" => 'required|regex:/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}/',
             "work_role" => 'required|in:Dirección,RRHH,Empleado',
             "salary" => 'required', 'numeric',
-            "bio" => 'required|max:150',
+            "bio" => 'required|max:150'
 
         ]);
 
         if ($validator->fails()) {
             $response['status'] = "0";
+            print($validator->errors());
             $response['msg'] = "Los campos introducidos no son correctos";
 
             return response()->json($response);
@@ -117,27 +119,107 @@ class EmployeesController extends Controller
         return response()->json($response);
     }
 
-    public function listEmployees(Request $req)
+    public function getlistEmployees(Request $req)
     {
 
-        $data = json_decode($req->getContent());
+        $response = ["status" => 1, "msg" => ""];
+
+        $token = $req->query('api_token');
 
         try {
-            if (Employee::where('api_token', '=', $data->api_token)->first()) {
-                $employee = Employee::where('api_token', '=', $data->api_token)->first();
+            if (Employee::where('api_token', '=', $token)->first()) {
 
-                if ($employee->job == 'RRHH') {
-                    $employeeList = Employee::select(['name', 'work_role', 'salary'])
-                        ->withCount('employees as amount_employees')
+                $employee = Employee::where('api_token', '=', $token)->first();
+
+                if ($employee->work_role == 'RRHH') {
+                    $employeeList = DB::table('employees')
+                        ->select('name', 'work_role', 'salary')
+                        ->where('work_role', 'like', 'Empleado')
                         ->get();
-                } else if ($employee->job == 'Dirección') {
-                    $employeeList = Employee::select(['name', 'work_role', 'salary'])
-                        ->withCount('employees as amount_employees')
+                } else if ($employee->work_role == 'Dirección') {
+                    $employeeList = DB::table('employees')
+                        ->select('name', 'work_role', 'salary')
+                        ->where('work_role', 'like', 'Empleado')
+                        ->orWhere('work_role', 'like', 'RRHH')
                         ->get();
                 }
                 $response['msg'] = $employeeList;
             }
         } catch (\Exception $e) {
+
+            $response['status'] = 0;
+            $response['msg'] = "Se ha producido un error: " . $e->getMessage();
+        }
+
+        return response()->json($response);
+    }
+
+    public function getEmployeeDetail(Request $req)
+    {
+
+        $response = ["status" => 1, "msg" => ""];
+
+        $token = $req->query('api_token');
+        $targetEmployeeId = $req->query('targetEmployeeId');
+
+        $targetEmployee = Employee::find($targetEmployeeId);
+
+        try {
+            if (Employee::where('api_token', '=', $token)->first()) {
+
+                $employee = Employee::where('api_token', '=', $token)->first();
+
+                if ($targetEmployee) {
+                    if ($employee->work_role == 'RRHH') {
+                        $employeeDetails = DB::table('employees')
+                            ->select('name', 'email', 'work_role', 'bio', 'salary')
+                            ->where('id', '=', $targetEmployeeId)
+                            ->where('work_role', 'like', 'Empleado')
+                            ->get();
+                    } else if ($employee->work_role == 'Dirección') {
+                        $employeeDetails = DB::table('employees')
+                            ->select('name', 'email', 'work_role', 'bio', 'salary')
+                            ->where('id', '=', $targetEmployeeId)
+                            ->where(function ($role) {
+                                $role->where('work_role', 'like', 'Empleado')
+                                    ->orWhere('work_role', 'like', 'RRHH');
+                            })
+
+                            ->get();
+                    }
+                    $response['msg'] = $employeeDetails;
+                } else {
+
+                    $response['status'] = 0;
+                    $response['msg'] = "Usuario no existe";
+                }
+            }
+        } catch (\Exception $e) {
+
+            $response['status'] = 0;
+            $response['msg'] = "Se ha producido un error: " . $e->getMessage();
+        }
+
+        return response()->json($response);
+    }
+
+    public function profile(Request $req)
+    {
+        $token = $req->query('api_token');
+
+        try {
+            if (Employee::where('api_token', '=', $token)->first()) {
+
+                $employee = Employee::where('api_token', '=', $token)->first();
+
+                $employeeList = DB::table('employees')
+                    ->where('id', '=', $employee->id)
+                    ->get();
+
+                $response['msg'] = $employeeList;
+            }
+        } catch (\Exception $e) {
+
             $response['status'] = 0;
             $response['msg'] = "Se ha producido un error: " . $e->getMessage();
         }
