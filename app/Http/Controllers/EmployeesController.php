@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PasswordRecovered;
+
 
 
 
@@ -68,7 +71,7 @@ class EmployeesController extends Controller
                 $employee = Employee::where('email', '=', $data->email)->first();
                 if (Hash::check($data->password, $employee->password)) {
                     do {
-                        $token = Hash::make($employee->id .now());
+                        $token = Hash::make($employee->id . now());
                     } while (Employee::where('api_token', $token)->first());
 
                     $employee->api_token = $token;
@@ -84,47 +87,36 @@ class EmployeesController extends Controller
             $req['msg'] = "Se ha producido un error" . $e->getMessage();
         }
         return response()->json($response);
-
     }
 
-    /*public function passwordRecovery(Request $req){
-        //Obtener el email y validar
+    public function passwordRecovery(Request $req)
+    {
 
-        //Al encontrar al usuario
-        $employee->apit_token = null;
-
-        $password = md5("newPass");
-        $employee->password = Hash::make($password);
-    }*/
+        $data = json_decode($req->getContent());
 
 
-    /*public function login(Request $req){
-        //Buscar email
-        $email = $req->email;
-        //Validar
+        try {
 
-        //Encontrar usuario
-        $employee = Employee::where('email',$email)->first();
-        //Pasar la validacion
+            if (Employee::where('email', '=', $data->email)->first()) {
+                $employee = Employee::where('email', '=', $data->email)->first();
+                
+                $employee->api_token = null;
 
-        //Comprobar la contraseña
-        if(Hash::check($req->password, $employee->passsword)){
-            //Generar api token
-            do{
-                $token  =Hash::make($usuario->id.now());
-                //md5()
-            }while(Employee::where('api_token',$token)->first());
+                $newPassword = md5("newPass");
+                $employee->password = Hash::make($newPassword);
+                $employee->save();
 
-            //Guardar token en usuario
-            $employee->api_token = $token;
-            $employee->save();
 
-            //Devolver respuesta con el token
-            return response()->json();
-
-        }else{
-            
-
+                Mail::to($employee->email)->send(new PasswordRecovered($newPassword));
+                $response['msg'] = "Correo enviado a la dirección= " . $employee->email;
+                
+            } else {
+                $response['msg'] = "El usuario no se ha encontrado";
+            }
+        } catch (\Exception $e) {
+            $response['status'] = 0;
+            $req['msg'] = "Se ha producido un error" . $e->getMessage();
         }
-    }*/
+        return response()->json($response);
+    }
 }
