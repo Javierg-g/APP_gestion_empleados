@@ -10,8 +10,6 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordRecovered;
 
 
-
-
 class EmployeesController extends Controller
 {
     public function register(Request $req)
@@ -62,6 +60,7 @@ class EmployeesController extends Controller
 
     public function login(Request $req)
     {
+        $response = ["status" => 1, "msg" => ""];
 
         $data = json_decode($req->getContent());
 
@@ -94,12 +93,11 @@ class EmployeesController extends Controller
 
         $data = json_decode($req->getContent());
 
-
         try {
 
             if (Employee::where('email', '=', $data->email)->first()) {
                 $employee = Employee::where('email', '=', $data->email)->first();
-                
+
                 $employee->api_token = null;
 
                 $newPassword = md5("newPass");
@@ -108,8 +106,7 @@ class EmployeesController extends Controller
 
 
                 Mail::to($employee->email)->send(new PasswordRecovered($newPassword));
-                $response['msg'] = "Correo enviado a la dirección= " . $employee->email;
-                
+                $response['msg'] = "Correo enviado a la dirección = " . $employee->email;
             } else {
                 $response['msg'] = "El usuario no se ha encontrado";
             }
@@ -117,6 +114,34 @@ class EmployeesController extends Controller
             $response['status'] = 0;
             $req['msg'] = "Se ha producido un error" . $e->getMessage();
         }
+        return response()->json($response);
+    }
+
+    public function listEmployees(Request $req)
+    {
+
+        $data = json_decode($req->getContent());
+
+        try {
+            if (Employee::where('api_token', '=', $data->api_token)->first()) {
+                $employee = Employee::where('api_token', '=', $data->api_token)->first();
+
+                if ($employee->job == 'RRHH') {
+                    $employeeList = Employee::select(['name', 'work_role', 'salary'])
+                        ->withCount('employees as amount_employees')
+                        ->get();
+                } else if ($employee->job == 'Dirección') {
+                    $employeeList = Employee::select(['name', 'work_role', 'salary'])
+                        ->withCount('employees as amount_employees')
+                        ->get();
+                }
+                $response['msg'] = $employeeList;
+            }
+        } catch (\Exception $e) {
+            $response['status'] = 0;
+            $response['msg'] = "Se ha producido un error: " . $e->getMessage();
+        }
+
         return response()->json($response);
     }
 }
