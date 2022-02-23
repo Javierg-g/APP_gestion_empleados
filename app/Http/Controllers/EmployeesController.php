@@ -77,7 +77,7 @@ class EmployeesController extends Controller
 
                     $employee->api_token = $token;
                     $employee->save();
-                    $response['msg'] = "Accediendo a la cuenta...";
+                    $response['msg'] = "Accediendo a la cuenta..." . $token;
                 } else {
                     $response['msg'] = "La contraseña es incorrecta";
                 }
