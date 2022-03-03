@@ -50,7 +50,7 @@ class EmployeesController extends Controller
 
             try {
                 $employee->save();
-                $response['msg'] = "Empleado registrado con id: " . $employee->id;
+                $response['msg'] = "Empleado registrado con exito";
             } catch (\Exception $e) {
                 $response['status'] = 0;
                 $req['msg'] = "Se ha producido un error" . $e->getMessage();
@@ -77,16 +77,26 @@ class EmployeesController extends Controller
 
                     $employee->api_token = $token;
                     $employee->save();
-                    $response['msg'] = "Accediendo a la cuenta..." . $token;
+                    $response['msg'] = $token;
+
+                    $users = Employee::where('api_token', '=', $token)->first();
+                    $role = Employee::where('employees.id', '=', $users->id)
+                    ->select('employees.work_role')
+                    ->get(); 
+
+                    $response['employeelist'] = $role;
+                
                 } else {
+                    $response['status'] = 0;
                     $response['msg'] = "La contraseña es incorrecta";
                 }
             } else {
+                $response['status'] = 0;
                 $response['msg'] = "El usuario no se ha encontrado";
             }
         } catch (\Exception $e) {
             $response['status'] = 0;
-            $req['msg'] = "Se ha producido un error" . $e->getMessage();
+            $response['msg'] = "Se ha producido un error" . $e->getMessage();
         }
         return response()->json($response);
     }
@@ -115,7 +125,7 @@ class EmployeesController extends Controller
             }
         } catch (\Exception $e) {
             $response['status'] = 0;
-            $req['msg'] = "Se ha producido un error" . $e->getMessage();
+            $response['msg'] = "Se ha producido un error" . $e->getMessage();
         }
         return response()->json($response);
     }
@@ -144,7 +154,7 @@ class EmployeesController extends Controller
                         ->orWhere('work_role', 'like', 'RRHH')
                         ->get();
                 }
-                $response['msg'] = $employeeList;
+                $response['employeeList'] = $employeeList;
             }
         } catch (\Exception $e) {
 
@@ -214,10 +224,11 @@ class EmployeesController extends Controller
                 $employee = Employee::where('api_token', '=', $token)->first();
 
                 $employeeList = DB::table('employees')
+                    ->select('employees.name','employees.work_role','employees.bio','employees.salary')
                     ->where('id', '=', $employee->id)
                     ->get();
 
-                $response['msg'] = $employeeList;
+                $response['employeeDetails'] = $employeeList;
             }
         } catch (\Exception $e) {
 

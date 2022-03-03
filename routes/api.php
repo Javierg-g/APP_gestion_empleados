@@ -13,7 +13,7 @@ use App\Models\Employee;
 Route::middleware(['token', 'permissions'])->prefix('employees')->group(function () {
 
     Route::put('/register', [EmployeesController::class, 'register']);
-    Route::get('/getlistEmployees', [EmployeesController::class, 'getlistEmployees']);
+    Route::post('/getlistEmployees', [EmployeesController::class, 'getlistEmployees']);
     Route::get('/getEmployeeDetail', [EmployeesController::class, 'getEmployeeDetail']);
     Route::get('/edit', [EmployeesController::class, 'edit']);
 
